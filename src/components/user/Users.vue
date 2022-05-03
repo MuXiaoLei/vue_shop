@@ -66,12 +66,14 @@
                             type="primary"
                             icon="el-icon-edit"
                             size="mini"
+                            @click="showReviseUser(scope.row.id)"
                         ></el-button>
                         <!-- 删除按钮 -->
                         <el-button
                             type="danger"
                             icon="el-icon-delete"
                             size="mini"
+                            @click="delectUser(scope.row.id)"
                         ></el-button>
                         <!-- 角色分配按钮 -->
                         <el-tooltip
@@ -101,7 +103,12 @@
             </el-pagination>
         </el-card>
         <!-- 添加用户对话框 -->
-        <el-dialog title="添加用户" :visible.sync="addUser" width="50%" @close=addUserClose >
+        <el-dialog
+            title="添加用户"
+            :visible.sync="addUser"
+            width="50%"
+            @close="addUserClose"
+        >
             <el-form
                 :model="addForm"
                 :rules="addFormRules"
@@ -123,11 +130,39 @@
             </el-form>
             <span slot="footer" class="dialog-footer">
                 <el-button @click="addUser = false">取 消</el-button>
-                <el-button type="primary" @click="addUserObj"
-                    >确 定</el-button
-                >
+                <el-button type="primary" @click="addUserObj">确 定</el-button>
             </span>
         </el-dialog>
+        <!-- 修改用户对话框 -->
+            <el-dialog
+                title="修改用户"
+                :visible.sync="reviseUser"
+                width="50%"
+                @close="reviseUserClose"
+            >
+                 <el-form
+                    :model="reviseForm"
+                    :rules="reviseFormRules"
+                    ref="ruleForm"
+                    label-width="100px"
+                >
+                    <el-form-item label="用户名称">
+                        <el-input v-model="reviseForm.username" disabled></el-input>
+                    </el-form-item>
+                    <el-form-item label="邮箱" prop="email">
+                        <el-input v-model="reviseForm.email"></el-input>
+                    </el-form-item>
+                    <el-form-item label="手机号" prop="mobile">
+                        <el-input v-model="reviseForm.mobile  "></el-input>
+                    </el-form-item>
+                </el-form>
+                <span slot="footer" class="dialog-footer">
+                        <el-button @click="reviseUser = false">取 消</el-button>
+                        <el-button type="primary" @click="reviseUserObj"
+                            >确 定</el-button
+                        >
+                    </span>
+            </el-dialog>
     </div>
 </template>
 
@@ -137,20 +172,22 @@ export default {
     data() {
         /* 验证邮箱规则 */
         var checkemail = (rule, value, cb) => {
-           const rulesEmail =  /^[A-Za-z0-9-._]+@[A-Za-z0-9-]+(.[A-Za-z0-9]+)*(.[A-Za-z]{2,6})$/
-           if(rulesEmail.test(value)){
-               cb()
-           }else{
-               cb(new Error('邮箱不正确'))
-           }
+            const rulesEmail =
+                /^[A-Za-z0-9-._]+@[A-Za-z0-9-]+(.[A-Za-z0-9]+)*(.[A-Za-z]{2,6})$/;
+            if (rulesEmail.test(value)) {
+                cb();
+            } else {
+                cb(new Error("邮箱不正确"));
+            }
         };
         /* 验证手机号规则 */
         var checkMobile = (rule, value, cb) => {
-            let reg = /^(0|86|17951)?(13[0-9]|15[012356789]|17[678]|18[0-9]|14[57])[0-9]{8}$/
+            let reg =
+                /^(0|86|17951)?(13[0-9]|15[012356789]|17[678]|18[0-9]|14[57])[0-9]{8}$/;
             if (reg.test(value)) {
-                cb()
+                cb();
             } else {
-                cb(new Error('手机号码格式不正确'))
+                cb(new Error("手机号码格式不正确"));
             }
         };
         return {
@@ -169,9 +206,9 @@ export default {
             /* 添加用户的表单数据 */
             addForm: {
                 username: "",
-                password:'',
-                email:'',
-                mobile:'',
+                password: "",
+                email: "",
+                mobile: "",
             },
             /* 添加用户的表单验证规则 */
             addFormRules: {
@@ -188,7 +225,7 @@ export default {
                         trigger: "blur",
                     },
                 ],
-                password:[
+                password: [
                     {
                         required: true,
                         message: "请输入密码",
@@ -201,22 +238,45 @@ export default {
                         trigger: "blur",
                     },
                 ],
-                email:[
+                email: [
                     {
                         required: true,
                         message: "请输入邮箱号",
                         trigger: "blur",
                     },
-                    { validator: checkemail, trigger: 'blur' }
+                    { validator: checkemail, trigger: "blur" },
                 ],
-                mobile:[
-                     {
+                mobile: [
+                    {
                         required: true,
                         message: "请输入手机号",
                         trigger: "blur",
                     },
-                    { validator: checkMobile, trigger: 'blur' }
-                ]
+                    { validator: checkMobile, trigger: "blur" },
+                ],
+            },
+            /* 控制修改用户的显示与隐藏对话框 */
+            reviseUser:false,
+            /* 修改用户的表单数据 */
+            reviseForm:{},
+            /* 修改用户的表单验证规则 */
+            reviseFormRules:{
+                email: [
+                    {
+                        required: true,
+                        message: "请输入邮箱号",
+                        trigger: "blur",
+                    },
+                    { validator: checkemail, trigger: "blur" },
+                ],
+                mobile: [
+                    {
+                        required: true,
+                        message: "请输入手机号",
+                        trigger: "blur",
+                    },
+                    { validator: checkMobile, trigger: "blur" },
+                ],
             },
         };
     },
@@ -256,21 +316,76 @@ export default {
             }
         },
         /* 监听添加用户表单 关闭事件 */
-        addUserClose(){
+        addUserClose() {
             this.$refs.ruleForm.resetFields();
         },
         /* 点击按钮 添加用户 */
-        addUserObj(){
-            this.$refs.ruleForm.validate(async val=>{
-                if(val){
-                    const {data:res} = await this.$http.post('users',this.addForm)
-                    if(res.meta.status !==200){
-                        return this.$message.error("添加用户失败")
-                    }else{
-                        return this.$message.success('添加用户成功')
+        addUserObj() {
+            this.$refs.ruleForm.validate(async (val) => {
+                if (val) {
+                    const { data: res } = await this.$http.post(
+                        "users",
+                        this.addForm
+                    );
+                    if (res.meta.status !== 201) {
+                        return this.$message.error("添加用户失败");
+                    } else {
+                        return this.$message.success("添加用户成功");
                     }
                 }
+            });
+        },
+        /* 展示修改用户对话框 */
+        async showReviseUser(id){
+            this.reviseUser = true;
+            console.log(id);
+            const {data:res} = await this.$http.get("users/"+id)
+            if(res.meta.status !==200){
+                return this.$message.error("修改获取用户失败")
+            }else{
+                this.reviseForm = res.data;
+                this.reviseUser = true;
+            }
+
+        },
+        /* 监听修改用户表单 关闭事件 */
+        reviseUserClose(){
+            this.$refs.ruleForm.resetFields();
+        },
+        /* 修改用户表单 提交数据 */
+        reviseUserObj(){
+            this.$refs.ruleForm.validate(async val =>{
+                if(!val) return
+                const {data:res} = await this.$http.put('users/'+this.reviseForm.id,
+                {email:this.reviseForm.email,
+                mobile:this.reviseForm.mobile})
+                if(res.meta.status !==200){
+                    return this.$message.error('更新用户失败')
+                }else{
+                    this.$message.success("更新用户成功")
+                    this.getUseData()
+                    this.reviseUser = false;
+                }     
             })
+        },
+        /* 根据id删除用户数据 */
+        async delectUser(id){
+            const userList= await this.$confirm('此操作将永久删除用户, 是否继续?', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+        }).catch(error => error)
+            if(userList !=='confirm'){
+                this.$message.info('已取消删除用户')
+            }else{
+                const {data:res} = await this.$http.delete('users/'+id)
+                if(res.meta.status !==200){
+                    this.$message.error('删除用户失败')
+                }else{
+                    this.$message.success('删除用户成功')
+                    this.getUseData();
+                }
+            }
         }
     },
 };
