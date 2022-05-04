@@ -83,6 +83,7 @@
                                 type="warning"
                                 icon="el-icon-setting"
                                 size="mini"
+                                @click="showUsersRoleButton(scope.row)"
                             ></el-button>
                         </el-tooltip>
                     </template>
@@ -132,35 +133,60 @@
             </span>
         </el-dialog>
         <!-- 修改用户对话框 -->
-            <el-dialog
-                title="修改用户"
-                :visible.sync="reviseUser"
-                width="50%"
-                @close="reviseUserClose"
+        <el-dialog
+            title="修改用户"
+            :visible.sync="reviseUser"
+            width="50%"
+            @close="reviseUserClose"
+        >
+            <el-form
+                :model="reviseForm"
+                :rules="reviseFormRules"
+                ref="ruleForm"
+                label-width="100px"
             >
-                 <el-form
-                    :model="reviseForm"
-                    :rules="reviseFormRules"
-                    ref="ruleForm"
-                    label-width="100px"
+                <el-form-item label="用户名称">
+                    <el-input v-model="reviseForm.username" disabled></el-input>
+                </el-form-item>
+                <el-form-item label="邮箱" prop="email">
+                    <el-input v-model="reviseForm.email"></el-input>
+                </el-form-item>
+                <el-form-item label="手机号" prop="mobile">
+                    <el-input v-model="reviseForm.mobile"></el-input>
+                </el-form-item>
+            </el-form>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="reviseUser = false">取 消</el-button>
+                <el-button type="primary" @click="reviseUserObj"
+                    >确 定</el-button
                 >
-                    <el-form-item label="用户名称">
-                        <el-input v-model="reviseForm.username" disabled></el-input>
-                    </el-form-item>
-                    <el-form-item label="邮箱" prop="email">
-                        <el-input v-model="reviseForm.email"></el-input>
-                    </el-form-item>
-                    <el-form-item label="手机号" prop="mobile">
-                        <el-input v-model="reviseForm.mobile  "></el-input>
-                    </el-form-item>
-                </el-form>
-                <span slot="footer" class="dialog-footer">
-                        <el-button @click="reviseUser = false">取 消</el-button>
-                        <el-button type="primary" @click="reviseUserObj"
-                            >确 定</el-button
+            </span>
+        </el-dialog>
+        <!-- 分配角色对话框 -->
+        <el-dialog title="分配角色" :visible.sync="showUsersVisible" width="50%" @close='setRoleClose'>
+            <div>
+                <p>当前的用户:{{ userInfo.username }}</p>
+                <p>当前的角色:{{ userInfo.role_name }}</p>
+                <p>
+                    分配新角色:
+                    <el-select v-model="selectUserValueId" placeholder="请选择">
+                        <el-option
+                            v-for="item in getUserList"
+                            :key="item.id"
+                            :label="item.roleName"
+                            :value="item.id"
                         >
-                    </span>
-            </el-dialog>
+                        </el-option>
+                    </el-select>
+                </p>
+            </div>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="showUsersVisible = false">取 消</el-button>
+                <el-button type="primary" @click="addUsersVisible"
+                    >确 定</el-button
+                >
+            </span>
+        </el-dialog>
     </div>
 </template>
 
@@ -254,11 +280,11 @@ export default {
                 ],
             },
             /* 控制修改用户的显示与隐藏对话框 */
-            reviseUser:false,
+            reviseUser: false,
             /* 修改用户的表单数据 */
-            reviseForm:{},
+            reviseForm: {},
             /* 修改用户的表单验证规则 */
-            reviseFormRules:{
+            reviseFormRules: {
                 email: [
                     {
                         required: true,
@@ -276,6 +302,14 @@ export default {
                     { validator: checkMobile, trigger: "blur" },
                 ],
             },
+            /* 控制显示与隐藏分配角色对话框 */
+            showUsersVisible: false,
+            /* 需要配分配角色的信息 */
+            userInfo: {},
+            /* 所有角色的数据列表 */
+            getUserList: [],
+            /* 已选中的角色id值 */
+            selectUserValueId:'',
         };
     },
     created() {
@@ -334,56 +368,91 @@ export default {
             });
         },
         /* 展示修改用户对话框 */
-        async showReviseUser(id){
+        async showReviseUser(id) {
             this.reviseUser = true;
             console.log(id);
-            const {data:res} = await this.$http.get("users/"+id)
-            if(res.meta.status !==200){
-                return this.$message.error("修改获取用户失败")
-            }else{
+            const { data: res } = await this.$http.get("users/" + id);
+            if (res.meta.status !== 200) {
+                return this.$message.error("修改获取用户失败");
+            } else {
                 this.reviseForm = res.data;
                 this.reviseUser = true;
             }
-
         },
         /* 监听修改用户表单 关闭事件 */
-        reviseUserClose(){
+        reviseUserClose() {
             this.$refs.ruleForm.resetFields();
         },
         /* 修改用户表单 提交数据 */
-        reviseUserObj(){
-            this.$refs.ruleForm.validate(async val =>{
-                if(!val) return
-                const {data:res} = await this.$http.put('users/'+this.reviseForm.id,
-                {email:this.reviseForm.email,
-                mobile:this.reviseForm.mobile})
-                if(res.meta.status !==200){
-                    return this.$message.error('更新用户失败')
-                }else{
-                    this.$message.success("更新用户成功")
-                    this.getUseData()
+        reviseUserObj() {
+            this.$refs.ruleForm.validate(async (val) => {
+                if (!val) return;
+                const { data: res } = await this.$http.put(
+                    "users/" + this.reviseForm.id,
+                    {
+                        email: this.reviseForm.email,
+                        mobile: this.reviseForm.mobile,
+                    }
+                );
+                if (res.meta.status !== 200) {
+                    return this.$message.error("更新用户失败");
+                } else {
+                    this.$message.success("更新用户成功");
+                    this.getUseData();
                     this.reviseUser = false;
-                }     
-            })
+                }
+            });
         },
         /* 根据id删除用户数据 */
-        async delectUser(id){
-            const userList= await this.$confirm('此操作将永久删除用户, 是否继续?', '提示', {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            type: 'warning'
-        }).catch(error => error)
-            if(userList !=='confirm'){
-                this.$message.info('已取消删除用户')
-            }else{
-                const {data:res} = await this.$http.delete('users/'+id)
-                if(res.meta.status !==200){
-                    this.$message.error('删除用户失败')
-                }else{
-                    this.$message.success('删除用户成功')
+        async delectUser(id) {
+            const userList = await this.$confirm(
+                "此操作将永久删除用户, 是否继续?",
+                "提示",
+                {
+                    confirmButtonText: "确定",
+                    cancelButtonText: "取消",
+                    type: "warning",
+                }
+            ).catch((error) => error);
+            if (userList !== "confirm") {
+                this.$message.info("已取消删除用户");
+            } else {
+                const { data: res } = await this.$http.delete("users/" + id);
+                if (res.meta.status !== 200) {
+                    this.$message.error("删除用户失败");
+                } else {
+                    this.$message.success("删除用户成功");
                     this.getUseData();
                 }
             }
+        },
+        /* 展示分配角色对话框 */
+        async showUsersRoleButton(rowId) {
+            this.userInfo = rowId;
+            const { data: res } = await this.$http.get("roles");
+            if (res.meta.status !== 200) {
+                return this.$message.error("角色获取失败");
+            }
+            this.getUserList = res.data;
+            this.showUsersVisible = true;
+            console.log('角色获取成功');
+        },
+        async addUsersVisible(){
+            if(!this.selectUserValueId){
+                return this.$message.error('请选择要分配的角色')
+            }
+            const {data:res} = await this.$http.put(`users/${this.userInfo.id}/role`,{rid:this.selectUserValueId});
+            if(res.meta.status !== 200){
+                return this.$message.error('设置角色失败')
+            }
+            this.$message.success('更新角色成功')
+            this.getUseData();
+            this.showUsersVisible=false;
+        },
+        /* 清空分配角色对话框 */
+        setRoleClose(){
+            this.selectUserValueId = '';
+            this.userInfo = {};
         }
     },
 };
