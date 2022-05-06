@@ -17,3 +17,6 @@ html,body,#app{
 .el-row{
     margin:0 30px 0 30px;
 }
+.el-cascader-panel {
+    max-height: 300px;
+} 

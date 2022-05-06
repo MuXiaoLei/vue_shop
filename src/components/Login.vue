@@ -55,14 +55,14 @@ export default {
       },
       loginInBut(){
           this.$refs.loginFormRef.validate(async val=>{
-              /* console.log(val); */
+              /* console.log('登录数据'+val); */
               if(!val) return;
               const result = await this.$http.post('login',this.loginFrom);
               console.log(result.data);
               if(result.data.meta.status === 200){
                 /* console.log("登录成功"); */
                 this.$message.success('登录成功!');  //登录成功的弹窗
-                console.log(result);
+                console.log("哈哈"+result.data.meta.status);
                 window.sessionStorage.setItem('token',result.data.data.token);
                 this.$router.push('/home');
               }else{

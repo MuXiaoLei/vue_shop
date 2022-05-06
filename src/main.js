@@ -2,13 +2,13 @@ import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
 import store from './store'
-//element的c3样式
-import 'element-ui/lib/theme-chalk/index.css';
-import ElementUI from 'element-ui';
+
 import {Button,Form,FormItem,Input,Header,
     Container,Aside,Main,Breadcrumb,BreadcrumbItem,
     Menu,Submenu,MenuItemGroup,MenuItem,Row,
-    Col,Card,MessageBox  } from 'element-ui';
+    Col,Card,MessageBox,Message,Table,TableColumn,
+    Switch,Tooltip,Pagination,Dialog,Option,Select,
+    Tag,Tree,Cascader  } from 'element-ui';
 
 import axios from 'axios';
 //配置请求的根路径
@@ -19,14 +19,18 @@ axios.interceptors.request.use(config=>{
     return config;
 })
 Vue.prototype.$http = axios;
+/* 导入vue-table-with-tree-grid插件 */
+import TreeTable from 'vue-table-with-tree-grid'
+Vue.component('tree-table',TreeTable)
 
 Vue.prototype.$confirm = MessageBox.confirm ;
+Vue.prototype.$message = Message;
 //导入字体图标
 import './assets/fonts/iconfont.css'
 //导入全局样式
 import './assets/css/global.css'
-//element使用
-Vue.use(ElementUI);
+
+
 Vue.use(Button);
 Vue.use(Form);
 Vue.use(FormItem);
@@ -44,6 +48,18 @@ Vue.use(MenuItem),
 Vue.use(Row),
 Vue.use(Col),
 Vue.use(Card),
+Vue.use(Table),
+Vue.use(TableColumn),
+Vue.use(Switch),
+Vue.use(Tooltip),
+Vue.use(Pagination),
+Vue.use(Dialog),
+Vue.use(Option),
+Vue.use(Select),
+Vue.use(Tag),
+Vue.use(Tree),
+Vue.use(Cascader),
+
 
 Vue.config.productionTip = false
 
