@@ -8,7 +8,7 @@ import {Button,Form,FormItem,Input,Header,
     Menu,Submenu,MenuItemGroup,MenuItem,Row,
     Col,Card,MessageBox,Message,Table,TableColumn,
     Switch,Tooltip,Pagination,Dialog,Option,Select,
-    Tag,Tree,Cascader  } from 'element-ui';
+    Tag,Tree,Cascader,Alert,Tabs,TabPane  } from 'element-ui';
 
 import axios from 'axios';
 //配置请求的根路径
@@ -59,7 +59,9 @@ Vue.use(Select),
 Vue.use(Tag),
 Vue.use(Tree),
 Vue.use(Cascader),
-
+Vue.use(Alert),
+Vue.use(Tabs),
+Vue.use(TabPane),
 
 Vue.config.productionTip = false
 
