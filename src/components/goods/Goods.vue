@@ -110,7 +110,7 @@ export default {
             if (res.meta.status !== 200) {
                 this.$message.error("获取商品列表失败");
             } else {
-               /*  this.$message.success("获取商品列表成功"); */
+                this.$message.success("获取商品列表成功");
                 this.goodsList = res.data.goods;
                 this.total = res.data.total;
                 /* console.log(this.total); */

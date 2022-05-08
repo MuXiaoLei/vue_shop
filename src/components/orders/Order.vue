@@ -11,10 +11,15 @@
             <!-- 搜索框 -->
             <el-row :gutter="20">
                 <el-col :span="7">
-                    <el-input placeholder="请输入内容" clearable>
+                    <el-input placeholder="请输入内容"
+                    clearable
+                    v-model="queryInfo.query"
+                    @clear="getOrderList"
+                    >
                         <el-button
                             slot="append"
                             icon="el-icon-search"
+                            @click="getOrderList"
                         ></el-button>
                     </el-input>
                 </el-col>
@@ -191,7 +196,7 @@ export default {
             if (res.meta.status !== 200) {
                 this.$message.error("获取订单列表失败");
             } else {
-                /*   this.$message.success("获取订单列表成功"); */
+                this.$message.success("获取订单列表成功");
                 this.orderDataList = res.data.goods;
                 this.total = res.data.total;
                 console.log(res.data);

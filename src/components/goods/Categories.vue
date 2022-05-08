@@ -268,4 +268,7 @@ export default {
 /* /deep/.el-cascader-panel {
     max-height: 300px;
 }  */
+/deep/.zk-table{
+    margin-top: 20px;
+}
 </style>

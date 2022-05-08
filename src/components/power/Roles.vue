@@ -8,7 +8,7 @@
         </el-breadcrumb>
         <!-- 卡片 -->
         <el-card>
-            <el-button type="primary">添加角色</el-button>
+            <el-button type="primary" @click="addRolesVisible = true">添加角色</el-button>
             <!-- 用户列表 -->
             <el-table
                 :data="rolesList"
@@ -102,7 +102,7 @@
                             type="primary"
                             icon="el-icon-edit"
                             size="mini"
-                            @click="showReviseUser(scope.row.id)"
+                            @click="showUpRoles(scope.row.id)"
                             >编辑</el-button
                         >
                         <!-- 删除按钮 -->
@@ -110,7 +110,7 @@
                             type="danger"
                             icon="el-icon-delete"
                             size="mini"
-                            @click="delectUser(scope.row.id)"
+                            @click="delectJueSe(scope.row.id)"
                             >删除</el-button
                         >
                         <!-- 角色分配按钮 -->
@@ -136,22 +136,61 @@
             title="角色分配"
             :visible.sync="showRolesDialog"
             width="50%"
-            @close='setRolesDialogClose'
+            @close="setRolesDialogClose"
         >
             <!-- 树形控件 -->
-            <el-tree 
-            :data="showRolesButtonList" 
-            :props="showRolesProps"
-            show-checkbox
-            node-key='id'
-            default-expand-all
-            :default-checked-keys='showRolesKey'
-            ref="treeRef"></el-tree>
+            <el-tree
+                :data="showRolesButtonList"
+                :props="showRolesProps"
+                show-checkbox
+                node-key="id"
+                default-expand-all
+                :default-checked-keys="showRolesKey"
+                ref="treeRef"
+            ></el-tree>
             <span slot="footer" class="dialog-footer">
                 <el-button @click="showRolesDialog = false">取 消</el-button>
-                <el-button type="primary" @click="allotRoles"
-                    >确 定</el-button
-                >
+                <el-button type="primary" @click="allotRoles">确 定</el-button>
+            </span>
+        </el-dialog>
+        <!-- 添加角色对话框 -->
+        <el-dialog title="添加角色" :visible.sync="addRolesVisible" width="50%">
+            <el-form
+                :model="addModel"
+                :rules="addRules"
+                ref="addRef"
+                label-width="100px"
+            >
+                <el-form-item label="角色名称" prop="roleName">
+                    <el-input v-model="addModel.roleName"></el-input>
+                </el-form-item>
+                <el-form-item label="角色描述">
+                    <el-input v-model="addModel.roleDesc"></el-input>
+                </el-form-item>
+            </el-form>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="addRolesVisible = false">取 消</el-button>
+                <el-button type="primary" @click="addRoles">确 定</el-button>
+            </span>
+        </el-dialog>
+        <!-- 修改角色 -->
+         <el-dialog title="修改角色" :visible.sync="upRolesVisible" width="50%">
+            <el-form
+                :model="upModel"
+                :rules="addRules"
+                ref="upRef"
+                label-width="100px"
+            >
+                <el-form-item label="角色名称" prop="roleName">
+                    <el-input v-model="upModel.roleName"></el-input>
+                </el-form-item>
+                <el-form-item label="角色描述">
+                    <el-input v-model="upModel.roleDesc"></el-input>
+                </el-form-item>
+            </el-form>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="upRolesVisible = false">取 消</el-button>
+                <el-button type="primary" @click="upRoles">确 定</el-button>
             </span>
         </el-dialog>
     </div>
@@ -165,18 +204,42 @@ export default {
             /* 所有角色列表数据 */
             rolesList: [],
             /* 控制角色分配对话框显示与隐藏 */
-            showRolesDialog:false,
+            showRolesDialog: false,
             /* 所有权限树状显示 */
-            showRolesButtonList:[],
+            showRolesButtonList: [],
             /* 树形控件绑定对象 */
-            showRolesProps:{
-                label:'authName', //要显示的名称
-                children:'children', //嵌套层级的元素
+            showRolesProps: {
+                label: "authName", //要显示的名称
+                children: "children", //嵌套层级的元素
             },
             /* 默认选中节点的id */
-            showRolesKey:[],
+            showRolesKey: [],
             /* 当前即将分配权限的角色id */
-            roleIds:'',
+            roleIds: "",
+            /* 显示与隐藏添加角色对话框 */
+            addRolesVisible: false,
+            /* 添加角色数据 */
+            addModel: {
+                roleName: "",
+                roleDesc:'',
+            },
+            /* 添加角色校验 */
+            addRules: {
+                roleName: [
+                    {
+                        required: true,
+                        message: "请输入角色名称",
+                        trigger: "blur",
+                    },
+                ],
+            },
+            /* 修改角色 */
+            upModel:{
+                roleName: "",
+                roleDesc:'',
+            },
+            /* 显示与隐藏修改对话框 */
+            upRolesVisible:false,
         };
     },
     created() {
@@ -219,50 +282,106 @@ export default {
         /* 角色分配按钮 */
         async showRolesButton(role) {
             this.roleIds = role.id;
-            const {data:res} = await this.$http.get('rights/tree')
-            if(res.meta.status !== 200){
-                return this.$message.error('获取取角色分配失败')
-            }else{
+            const { data: res } = await this.$http.get("rights/tree");
+            if (res.meta.status !== 200) {
+                return this.$message.error("获取取角色分配失败");
+            } else {
                 this.showRolesButtonList = res.data;
-                console.log(this.showRolesButtonList); 
+                console.log(this.showRolesButtonList);
             }
             /* 获取三级节点的id */
-            this.getLeafkey(role,this.showRolesKey);
+            this.getLeafkey(role, this.showRolesKey);
             this.showRolesDialog = true;
         },
         /* 用递归获取默认用户权限,并保存到showRolesKey */
-        getLeafkey(node,arr){
+        getLeafkey(node, arr) {
             /* 如果node中不包含children,则是三级节点 */
-            if(!node.children){
-                return arr.push(node.id)
-            }else{
-                node.children.forEach(item=>{
-                    return this.getLeafkey(item,arr);
-                })
+            if (!node.children) {
+                return arr.push(node.id);
+            } else {
+                node.children.forEach((item) => {
+                    return this.getLeafkey(item, arr);
+                });
             }
         },
         /* 监听分配权限对话框关闭事件 */
-        setRolesDialogClose(){
-            this.showRolesKey=[];
+        setRolesDialogClose() {
+            this.showRolesKey = [];
         },
         /* 点击为角色分配权限 */
-        async allotRoles(){
+        async allotRoles() {
             const keys = [
                 ...this.$refs.treeRef.getCheckedKeys(),
-                ...this.$refs.treeRef.getHalfCheckedKeys()
+                ...this.$refs.treeRef.getHalfCheckedKeys(),
             ];
-            const idStr = keys.join(',');
-            const {data:res} = await this.$http.post(`roles/${this.roleIds}/rights`,{rids:idStr});
-            if(res.meta.status !==200 ){
-                return this.$message.error('分配权限失败')
-            }else{
-                this.$message.success('分配权限成功')
+            const idStr = keys.join(",");
+            const { data: res } = await this.$http.post(
+                `roles/${this.roleIds}/rights`,
+                { rids: idStr }
+            );
+            if (res.meta.status !== 200) {
+                return this.$message.error("分配权限失败");
+            } else {
+                this.$message.success("分配权限成功");
                 this.getRolesList();
-                this.showRolesDialog=false;
+                this.showRolesDialog = false;
             }
-        },  
-    }
-}
+        },
+        /* 添加角色按钮 */
+        addRoles() {
+            this.$refs.addRef.validate( async val => {
+                if (val) {
+                    const { data: res } = await this.$http.post(
+                        "roles",
+                        this.addModel
+                    );
+                    if (res.meta.status !== 201) {
+                        return this.$message.error("添加角色失败!");
+                    }
+                    this.rolesList = res.data;
+                    this.getRolesList();
+                }
+            });
+        },
+        /* 显示修改对话框 */
+        async showUpRoles(id){
+            this.upRolesVisible = true;
+            const {data:res} = await this.$http.get(`roles/${id}`);
+            if(res.meta.status !==200){
+                this.$message.error('获取角色id失败!')
+            }else{
+                this.upModel = res.data
+                console.log(this.upModel);
+            }
+        },
+        /* 修改角色按钮 */
+        async upRoles(){
+            const {data:res} = await this.$http.put('roles/'+this.upModel.roleId,
+            {
+                roleName:this.upModel.roleName,
+                roleDesc:this.upModel.roleDesc,
+            })
+            console.log(res);
+            if(res.meta.status !==200){
+                return this.$message.error('修改角色失败!')
+            }else{
+                this.rolesList = res.data;
+                this.getRolesList();
+                this.upRolesVisible = false;
+            }
+        },
+        /* 删除角色按钮 */
+        async delectJueSe(id){
+            const {data:res} = await this.$http.delete(`roles/${id}`)
+            if(res.meta.status !==200){
+                return this.$message.error("删除角色失败!")
+            }else{
+                this.$message.success('删除角色成功!');
+                this.getRolesList();
+            }
+        }
+    },
+};
 </script>
 
 <style lang="less" scoped>
