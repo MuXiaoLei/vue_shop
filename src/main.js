@@ -16,7 +16,8 @@ import {Button,Form,FormItem,Input,Header,
     Col,Card,MessageBox,Message,Table,TableColumn,
     Switch,Tooltip,Pagination,Dialog,Option,Select,
     Tag,Tree,Cascader,Alert,Tabs,TabPane,Steps,Step,
-    Checkbox,CheckboxGroup,Upload  } from 'element-ui';
+    Checkbox,CheckboxGroup,Upload,Timeline,
+    TimelineItem  } from 'element-ui';
 
 import axios from 'axios';
 //配置请求的根路径
@@ -75,6 +76,8 @@ Vue.use(Step),
 Vue.use(Checkbox),
 Vue.use(CheckboxGroup),
 Vue.use(Upload),
+Vue.use(Timeline),
+Vue.use(TimelineItem),
 
 Vue.filter('filterDate',function(originVal){
     const dt = new Date(originVal)
